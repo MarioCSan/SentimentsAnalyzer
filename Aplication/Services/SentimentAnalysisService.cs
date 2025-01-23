@@ -15,74 +15,44 @@ public class SentimentAnalysisService : ISentimentAnalysisService
         LoadModel();
     }
 
-    public async Task LoadModel()
+    public void LoadModel()
     {
+        string basePath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+        string dataPath = Path.Combine(basePath, "wikipedia-detox-250-line-data.tsv");
+
         if (System.IO.File.Exists("sentiment_model.zip"))
         {
+            // Cargar el modelo existente
             _model = _mlContext.Model.Load("sentiment_model.zip", out var modelInputSchema);
             _predictionEngine = _mlContext.Model.CreatePredictionEngine<SentimentData, SentimentPrediction>(_model);
         }
         else
         {
-            string basePath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            string dataPath = Path.Combine(basePath, "Application", "Services", "wikipedia-detox-250-line-data.tsv");
-
-            // URL del archivo en GitHub
-            string githubUrl = "https://raw.githubusercontent.com/dotnet/machinelearning/main/test/data/wikipedia-detox-250-line-data.tsv";
-
-            // Verificar si el archivo existe localmente
-            if (!File.Exists(dataPath))
+            if (File.Exists(dataPath))
             {
-                Console.WriteLine("El archivo no se encuentra localmente. Descargando desde GitHub...");
-                await DownloadFileAsync(githubUrl, dataPath);
-            }
-
-            if (System.IO.File.Exists("sentiment_model.zip"))
-            {
-                _model = _mlContext.Model.Load("sentiment_model.zip", out var modelInputSchema);
-                _predictionEngine = _mlContext.Model.CreatePredictionEngine<SentimentData, SentimentPrediction>(_model);
+                Console.WriteLine("El archivo existe y se procederá a entrenar el modelo.");
+                TrainModel(dataPath);
             }
             else
             {
-                if (File.Exists(dataPath))
-                {
-                    Console.WriteLine("El archivo existe y se procederá a entrenar el modelo.");
-                    TrainModel(dataPath);
-                }
+                Console.WriteLine("El archivo de datos no se encuentra.");
             }
         }
     }
-    private async Task DownloadFileAsync(string url, string outputPath)
-    {
-        using (var client = new HttpClient())
-        {
-            var response = await client.GetByteArrayAsync(url);
-            await File.WriteAllBytesAsync(outputPath, response);
-        }
-    }
-
     public void TrainModel(string dataPath)
     {
         // Cargar los datos desde el archivo
         IDataView data = _mlContext.Data.LoadFromTextFile<SentimentData>(dataPath, separatorChar: '\t', hasHeader: true);
 
         // Definir el pipeline de ML.NET
-        var pipeline = _mlContext.Transforms.Text.FeaturizeText("SentimentText")
-            .Append(_mlContext.Transforms.Conversion.MapValueToKey("Sentiment"))
-            .Append(_mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy("Sentiment", "SentimentText"))
-            .Append(_mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"));
+        var pipeline = _mlContext.Transforms.Text.FeaturizeText(outputColumnName: "Features", inputColumnName: "SentimentText")
+            .Append(_mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "Label", inputColumnName: "Sentiment"))
+            .Append(_mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(labelColumnName: "Label", featureColumnName: "Features"))
+            .Append(_mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "Label"));
 
-        if (!System.IO.File.Exists("sentiment_model.zip"))
-        {
-            // Entrenamiento del modelo
-            _model = pipeline.Fit(data);
-            _mlContext.Model.Save(_model, data.Schema, "sentiment_model.zip");
-        }
-        else
-        {
-            // Cargar el modelo previamente entrenado
-            _model = _mlContext.Model.Load("sentiment_model.zip", out var modelInputSchema);
-        }
+        // Entrenamiento del modelo
+        _model = pipeline.Fit(data);
+        _mlContext.Model.Save(_model, data.Schema, "sentiment_model.zip");
 
         // Crear el motor de predicción
         _predictionEngine = _mlContext.Model.CreatePredictionEngine<SentimentData, SentimentPrediction>(_model);
@@ -104,8 +74,8 @@ public class SentimentAnalysisService : ISentimentAnalysisService
                 throw new InvalidOperationException("El motor de predicción no ha sido inicializado.");
             }
 
-            var sentimentService = new SentimentAnalysisService(_mlContext);
-            prediction = sentimentService.PredictSentiment("I love this product!");
+            // Realizar la predicción
+            prediction = _predictionEngine.Predict(sentimentData);
         }
         catch (Exception ex)
         {
