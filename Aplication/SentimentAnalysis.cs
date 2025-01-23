@@ -23,7 +23,7 @@ namespace PrompSentiments.Aplication
 
             // Preprocesamiento de texto
             var pipeline = _mlContext.Transforms.Text.FeaturizeText("Features", nameof(SentimentData.SentimentText))
-                .Append(_mlContext.Regression.Trainers.Sdca(labelColumnName: nameof(SentimentData.SentimentLabel), featureColumnName: "Features"));
+                .Append(_mlContext.Regression.Trainers.Sdca(labelColumnName: nameof(SentimentData.Sentiment), featureColumnName: "Features"));
 
             // Entrenar el modelo
             var model = pipeline.Fit(data);

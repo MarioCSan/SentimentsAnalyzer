@@ -21,7 +21,7 @@ namespace PrompSentiments.Infrastructure
 
             // Crear el pipeline de entrenamiento
             var pipeline = _mlContext.Transforms.Text.FeaturizeText("Features", nameof(SentimentData.SentimentText))  // Convertir texto en características
-                .Append(_mlContext.Transforms.Conversion.MapValueToKey("Label", nameof(SentimentData.SentimentLabel))  // Convertir las etiquetas a valores numéricos
+                .Append(_mlContext.Transforms.Conversion.MapValueToKey("Label", nameof(SentimentData.Sentiment))  // Convertir las etiquetas a valores numéricos
                 .Append(_mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy("Label", "Features"))  // Algoritmo de clasificación
                 .Append(_mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel", "PredictedLabel")));  // Convertir el valor numérico predicho de nuevo a su etiqueta original
 

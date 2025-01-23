@@ -1,20 +1,26 @@
-﻿@model PrompSentiments.Domain.Models.SentimentPrediction
+﻿@model PrompSentiments.Domain.Models.SentimentViewModel
 
-<h2>Analizar Sentimiento</h2>
+@{
+    ViewData["Title"] = "Analyze Sentiment";
+}
 
-<form method="post" asp-action="AnalyzeSentiment">
-    <textarea name="text" rows="4" cols="50"></textarea>
-    <button type="submit">Analizar Sentimiento</button>
+<h1>Sentiment Analysis</h1>
+
+<form method="get" action="/Sentiment/AnalyzeSentiment">
+    <label for="text">Enter text to analyze sentiment:</label>
+    <textarea name="text" id="text" rows="4" cols="50">@Model.InputText</textarea>
+    <br />
+    <button type="submit">Analyze Sentiment</button>
 </form>
 
-@if (Model != null)
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <h3>Sentimiento Predicho: @Model.PredictedLabel</h3>
-    <p>Probabilidad: @Model.Probability</p>
-    <p>Score: @Model.Score</p>
+    <div style="color:red;">@Model.ErrorMessage</div>
+}
 
-    @if (ViewData["Response"] != null)
-    {
-        <h4>Respuesta: @ViewData["Response"]</h4>
-    }
+@if (!string.IsNullOrEmpty(Model.ResponseMessage))
+{
+    <h2>Analysis Result</h2>
+    <p><strong>Sentiment:</strong> @Model.Sentiment</p>
+    <p><strong>Response:</strong> @Model.ResponseMessage</p>
 }

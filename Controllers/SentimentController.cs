@@ -1,33 +1,38 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PrompSentiments.Aplication.DTOs;
 using PrompSentiments.Application.Interfaces;
 using PrompSentiments.Domain.Models;
-
-namespace PrompSentiments.Web.Controllers
+public class SentimentController : Controller
 {
-    public class SentimentController : Controller
+    private readonly ISentimentAnalysisService _sentimentAnalysisService;
+
+    public SentimentController(ISentimentAnalysisService sentimentAnalysisService)
     {
-        private readonly ISentimentAnalysisService _sentimentAnalysisService;
+        _sentimentAnalysisService = sentimentAnalysisService;
+    }
 
-        public SentimentController(ISentimentAnalysisService sentimentAnalysisService)
+    public IActionResult AnalyzeSentiment(string text)
+    {
+        // Crear un objeto para pasar los resultados y cualquier error a la vista
+        var model = new PrompSentiments.Domain.Models.SentimentViewModel();
+
+        if (string.IsNullOrEmpty(text))
         {
-            _sentimentAnalysisService = sentimentAnalysisService;
+            // Si el texto está vacío, mostrar un mensaje de error en la misma vista
+            model.ErrorMessage = "Text cannot be empty.";
+            return View(model);  // Vuelve a la misma vista con el mensaje de error
         }
 
-        // GET: Sentiment/AnalyzeSentiment
-        public IActionResult AnalyzeSentiment()
-        {
-            return View("~/Views/Sentiment/AnalyzeSentiment.cshtml"); // Devuelve la vista 'AnalyzeSentiment.cshtml'
-        }
+        // Si el texto no está vacío, realiza la predicción
+        var prediction = _sentimentAnalysisService.AnalyzeSentiment(text);
+        var sentimentType = (SentimentType)(uint)prediction.Sentiment;
+        var responseMessage = _sentimentAnalysisService.GenerateResponse(sentimentType);
 
-        // POST: Sentiment/AnalyzeSentiment
-        [HttpPost]
-        public IActionResult AnalyzeSentiment(string text)
-        {
-            var prediction = _sentimentAnalysisService.AnalyzeSentiment(text);
-            var response = _sentimentAnalysisService.GenerateResponse(prediction.PredictedLabel);
+        // Pasar los resultados a la vista
+        model.Sentiment = prediction.Sentiment;
+        model.ResponseMessage = responseMessage;
+        model.InputText = text;  // Mantener el texto ingresado para mostrarlo después
 
-            ViewData["Response"] = response; 
-            return View(prediction); 
-        }
+        return View(model);  // Devuelve la vista con los resultados
     }
 }
