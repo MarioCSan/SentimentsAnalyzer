@@ -1,16 +1,15 @@
 ﻿namespace PrompSentiments.Domain.Models
 {
+    public enum SentimentType
+    {
+        Happy = 0,
+        Angry = 1,
+        Neutral = 2
+    }
+
     public class SentimentData
     {
         public string SentimentText { get; set; }
-        public bool Sentiment { get; set; }
+        public float SentimentLabel { get; set; } 
     }
-
-    public class SentimentPrediction : SentimentData
-    {
-        public float Probability { get; set; }
-        public float Score { get; set; }
-        public bool PredictedLabel { get; set; }
-    }
-
 }

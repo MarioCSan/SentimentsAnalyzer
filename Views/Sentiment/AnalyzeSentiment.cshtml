@@ -1,0 +1,20 @@
+﻿@model PrompSentiments.Domain.Models.SentimentPrediction
+
+<h2>Analizar Sentimiento</h2>
+
+<form method="post" asp-action="AnalyzeSentiment">
+    <textarea name="text" rows="4" cols="50"></textarea>
+    <button type="submit">Analizar Sentimiento</button>
+</form>
+
+@if (Model != null)
+{
+    <h3>Sentimiento Predicho: @Model.PredictedLabel</h3>
+    <p>Probabilidad: @Model.Probability</p>
+    <p>Score: @Model.Score</p>
+
+    @if (ViewData["Response"] != null)
+    {
+        <h4>Respuesta: @ViewData["Response"]</h4>
+    }
+}

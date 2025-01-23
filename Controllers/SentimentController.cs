@@ -1,83 +1,33 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using PrompSentiments.Application.Interfaces;
+using PrompSentiments.Domain.Models;
 
-namespace PrompSentiments.Controllers
+namespace PrompSentiments.Web.Controllers
 {
     public class SentimentController : Controller
     {
-        // GET: SentimentController
-        public ActionResult Index()
+        private readonly ISentimentAnalysisService _sentimentAnalysisService;
+
+        public SentimentController(ISentimentAnalysisService sentimentAnalysisService)
         {
-            return View();
+            _sentimentAnalysisService = sentimentAnalysisService;
         }
 
-        // GET: SentimentController/Details/5
-        public ActionResult Details(int id)
+        // GET: Sentiment/AnalyzeSentiment
+        public IActionResult AnalyzeSentiment()
         {
-            return View();
+            return View("~/Views/Sentiment/AnalyzeSentiment.cshtml"); // Devuelve la vista 'AnalyzeSentiment.cshtml'
         }
 
-        // GET: SentimentController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: SentimentController/Create
+        // POST: Sentiment/AnalyzeSentiment
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public IActionResult AnalyzeSentiment(string text)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+            var prediction = _sentimentAnalysisService.AnalyzeSentiment(text);
+            var response = _sentimentAnalysisService.GenerateResponse(prediction.PredictedLabel);
 
-        // GET: SentimentController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: SentimentController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: SentimentController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: SentimentController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            ViewData["Response"] = response; 
+            return View(prediction); 
         }
     }
 }

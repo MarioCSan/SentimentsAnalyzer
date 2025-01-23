@@ -11,9 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Infrastructure\" />
     <Folder Include="Presentation\" />
-    <Folder Include="Web\Views\Sentiments\" />
+    <Folder Include="Web\" />
   </ItemGroup>
 
 </Project>
